@@ -1,0 +1,134 @@
+### 题目描述
+给你一个由"1"（陆地）和“0”（水）组成的二维网格，计算网格中岛屿的数量。
+
+岛屿总是被水包围，并且每座岛屿只能由水平方向和/或竖直方向上相邻的陆地连接形成。
+
+此外，你可以假设该网络的四条边均被水包围。
+
+```
+输入：grid = [
+  ["1","1","1","1","0"],
+  ["1","1","0","1","0"],
+  ["1","1","0","0","0"],
+  ["0","0","0","0","0"]
+]
+输出：1
+```
+
+我们所熟悉的DFS（深度优先搜索）问题通常是在树或者图结构上进行的。该题中的DFS问题，是在一种
+
+网格结构中进行的。岛屿问题是这类网格DFS问题的典型代表。网络结构遍历起来要比二叉树复杂一些。
+### 网格类问题的DFS遍历方法
+##### 网格问题的基本概念
+我们首先明确一下岛屿问题中的网格结构是如何定义的，以方便之后的讨论
+
+网格问题是由 m x n 个小方格组成一个网格，每个小方格与其上下左右四个方格认为是相邻的，要在这样的网格上进行某种搜索。
+
+岛屿问题是一类典型的网格问题。每个格子中的数字可能是0或者1.我们把数字为0的格子看成海洋格子，数字为1的格子看成陆地格子，这样相邻的陆地格子就连接成一个岛屿。
+![](https://pic.leetcode-cn.com/c36f9ee4aa60007f02ff4298bc355fd6160aa2b0d628c3607c9281ce864b75a2.jpg)
+在这样一个设定下，就出现了各种岛屿问题的变种，包括岛屿的数量、面积、周长等。不过这些问题，基本都可以用DFS遍历来解决。
+
+#### DFS的基本结构
+网格结构要比二叉树结构稍微复杂一些，他其实是一种简化版的图结构。要写好网格上的DFS遍历，我们首先要理解二叉树上的DFS遍历方法，再类比写出网格结构上的DFS遍历。我们写的二叉树DFS遍历一般是这样的：
+```python
+def traverse(root):
+	# 判断base case
+	if not root:
+		return
+	# 访问两个相邻节点：左子节点、右子节点
+	traverse(root.left)
+	traverse(root.right)
+```
+可以看到，二叉树的DFS有两个要素：访问相邻节点 和 判断base case
+
+第一个要素是访问相邻节点。二叉树的相邻节点非常简单，只有左子节点和右子节点两个。二叉树本身就是一个递归定义的结构：一棵二叉树，他的左子树和右子树也是一棵二叉树。那么我们的DFS遍历只需要递归调用左子树和右子树即可。
+
+第二个要素是判断base case。一般来说，二叉树便利的base case是root==none。这样一个条件判断其实有两个含义：一方面，这表示root指向的子树为空，不需要再往下遍历了。另一方面，在root==None的时候及时返回，可以让后面的root.left和root.tight操作不会出现空指针异常
+
+对于网格上的DFS，我们完全可以参考二叉树的DFS，写出网格DFS的两个要素：
+
+首先，网格结构中的格子有多少相邻节点？答案是上下左右四个，对于格子（r,c）来说,四个相邻的格子分别是(r-1,c),(r+1,c),(r,c-1),(r,c+1).换言之，网格结构是四叉的。
+
+其次，网格DFS中的base case是什么？从二叉树的base case对应过来，应该是网格中不需要继续遍历、grid[r][c]会出现数组下标越界异常的格子，也就是那些超出网格范围的格子。
+
+这样，可以得到网格DFS遍历的框架代码：
+```python
+class Solution:
+	
+	# 判断坐标(r,c)是否在网格中
+	def is_area(self,grid,r,c):
+		return 0<=r and r<len(grid) and 0<=c and c<len(grid[0])
+		
+	# dfs
+	def dfs(self,grid,r,c):
+		if not self.is_area(grid,r,c):
+			return
+		dfs(grid,r-1,c)
+		dfs(grid,r+1,c)
+		dfs(grid,r,c-1)
+		dfs(grid,r,c+1)
+```
+#### 如何避免重复遍历
+网格结构的DFS与二叉树的DFS最大的不同之处在于，遍历中可能遇到遍历过的节点。这是因为，网格结构本质上是一个图，我们可以把每个格子看成图中的节点，每个节点有向上下左右的四条边。在图中遍历时，自然可能遇到重复遍历节点。
+
+这时候DFS可能会不停地兜圈子，永远停不下来。
+
+如何避免这样的重复遍历呢？
+
+答案是标记已经遍历过的格子。以岛屿问题为例，我们需要在所有值为1的陆地格子上做DFS遍历。每走过一个陆地格子，就把格子的值改为2，这样当我们遇到2的时候，就知道这是遍历过的格子了。也就是说，每个格子可能取三个值
+- 0		-海洋格子
+- 1		-陆地格子（未遍历过）
+- 2		-陆地格子（已遍历过）
+在框架代码中加入避免重复的代码：
+```python
+class Solution:
+	def is_area(self,grid,r,c):
+		return 0<=r and r<len(grid) and 0<=c and c<len(grid[0])
+	
+	def dfs(self,grid,r,c):
+		# 判断base case
+		if not self.is_area(grid,r,c):
+			return
+		
+		# 如果这个格子不是岛屿，直接返回
+		if grid[r][c] != 1:
+			return
+		
+		grid[r][c] = 2
+		
+		self.dfs(grid,r-1,c)
+		self.dfs(grid,r+1,c)
+		self.dfs(grid,r,c-1)
+		self.dfs(grid,r,c+1)
+```
+这样我们就得到了一个岛屿问题、乃至各种网格问题的通用DFS遍历方法。
+
+
+# 本题的代码
+```python
+class Solution:
+	def is_area(self,grid,r,c):
+		return 0<=r and r<len(grid) and 0<=c and c<len(grid[0])
+		
+	def dfs(self,grid,r,c):
+		if not self.is_area(grid,r,c):
+			return 
+		
+		if grid[r][c] != 1:
+			return
+		
+		grid[r][c] = 2
+		
+		self.dfs(grid,r-1,c)
+		self.dfs(grid,r+1,c)
+		self.dfs(grid,r,c-1)
+		self.dfs(grid,r,c+1)
+		
+	res = 0
+	for i in range(len(grid)):
+		for j in range(len(grid[0]):
+			if grid[i][j] == 1:
+				self.dfs(grid,i,j):
+				res+=1
+	return res
+```
