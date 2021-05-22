@@ -28,4 +28,4 @@ class Solution:
 				break
 		return slow == 1
 ```
-![太阳系行星围绕太阳做有向无环图的运动](https://upload-images.jianshu.io/upload_images/7808357-2fd9f96954801b2b.gif?imageMogr2/auto-orient/strip|imageView2/2/w/384/format/webp)
+[太阳系行星围绕太阳做有向无环图的运动](https://upload-images.jianshu.io/upload_images/7808357-2fd9f96954801b2b.gif?imageMogr2/auto-orient/strip|imageView2/2/w/384/format/webp)
