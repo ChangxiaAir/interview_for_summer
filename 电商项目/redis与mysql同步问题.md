@@ -1,0 +1,1 @@
+mysql与redis双写一致性
